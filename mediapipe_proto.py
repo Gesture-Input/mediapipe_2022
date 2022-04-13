@@ -35,8 +35,8 @@ class camera:
         # Flip the image horizontally for a selfie-view display.
         cv2.imshow('MediaPipe Hands', cv2.flip(self.image, 1))
     
-    def get_data(self, data):
-        for hand_landmarks in data.multi_hand_landmarks:
+    def get_data(self):
+        for hand_landmarks in self.results.multi_hand_landmarks:
             result = hand_landmarks.landmark
         return result
     
@@ -56,7 +56,7 @@ class camera:
             self.draw_hand_data()
             
             if(self.results.multi_hand_landmarks != None):
-                data = self.get_data(self.results)
+                data = self.get_data()
                 print(self.loop)
                 print(data)
             self.loop+=1
