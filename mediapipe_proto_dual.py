@@ -1,7 +1,8 @@
 import cv2
 import mediapipe as mp
+import threading
 
-mp_drawing = mp.solutions.drawing_utils
+
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_hands = mp.solutions.hands
 
@@ -34,12 +35,15 @@ def list_ports():
 
 
 class GID:
-    class camera:
+    class camera(threading.Thread):
         def __init__(self, index):
+            threading.Thread.__init__(self)
+            self.previewName = index
             self.cap = cv2.VideoCapture(index)
             self.hands = mp_hands.Hands(model_complexity=0,min_detection_confidence=0.5,min_tracking_confidence=0.5)
             self.success, self.image = self.cap.read()
             self.results = self.hands.process(self.image)
+            self.mp_drawing = mp.solutions.drawing_utils
         def update(self):
             self.success, self.image = self.cap.read()
         
@@ -53,14 +57,14 @@ class GID:
             self.image = cv2.cvtColor(self.image, cv2.COLOR_RGB2BGR)
             if self.results.multi_hand_landmarks:
                 for hand_landmarks in self.results.multi_hand_landmarks:
-                    mp_drawing.draw_landmarks(
+                    self.mp_drawing.draw_landmarks(
                         self.image,
                         hand_landmarks,
                         mp_hands.HAND_CONNECTIONS,
                         mp_drawing_styles.get_default_hand_landmarks_style(),
                         mp_drawing_styles.get_default_hand_connections_style())
             # Flip the image horizontally for a selfie-view display.
-            cv2.imshow('MediaPipe Hands', cv2.flip(self.image, 1))
+            cv2.imshow(self.previewName, cv2.flip(self.image, 1))
         
         def get_data(self):
             for hand_landmarks in self.results.multi_hand_landmarks:
@@ -95,7 +99,7 @@ class GID:
             
                 
             self.camera1.draw_hand_data()
-            # self.camera2.draw_hand_data()
+            self.camera2.draw_hand_data()
 
 
             if(self.camera1.results.multi_hand_landmarks != None):
