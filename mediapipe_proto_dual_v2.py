@@ -1,5 +1,6 @@
 import cv2
 import mediapipe as mp
+import math
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -75,6 +76,7 @@ class GID:
         self.camera1_data = []
         self.loop = 0
         self.hand = []
+        self.arm_to_finger = [0,0,0,0,0]
 
 
     def calculate_diff(self, data):
@@ -100,7 +102,25 @@ class GID:
             self.hand[i].z = (self.camera1_data[0][i].z+self.camera1_data[1][i].z+self.camera1_data[2][i].z) / 3
         return
 
+    def length_between(self,data):
+        return math.sqrt(data[0]*data[0] + data[1]*data[1] + data[2]*data[2])
+
+    def length_from_zero(self,index):
+        return math.sqrt(self.hand[index].x*self.hand[index].x + self.hand[index].y*self.hand[index].y + self.hand[index].z*self.hand[index].z)
+
+    def coor_dif(self,i1,i2):
+        return [self.hand[i1].x-self.hand[i2].x,self.hand[i1].y-self.hand[i2].y,self.hand[i1].z-self.hand[i2].z]
+
+    def get_arm_to_finger_end_data(self):
+        self.arm_to_finger = [self.length_between(self.coor_dif(4,8)),self.length_between(self.coor_dif(8,12)),self.length_between(self.coor_dif(12,16)),self.length_between(self.coor_dif(16,20)),self.length_between(self.coor_dif(20,4))]
     
+    def list_avg(self,data):
+        sum = 0
+        for i in data:
+            sum+= i
+        return sum / len(data)
+    
+
     
     def run(self):
         while self.camera1.cap.isOpened():
@@ -127,12 +147,24 @@ class GID:
                     self.camera1_data.pop(0)
                 # print(self.camera1_data)
                 self.hand_data_process()
+                self.get_arm_to_finger_end_data()
                 
                 # data = self.camera1.get_data()
-                print(self.loop)
+                # print(self.loop)
                 # print(self.camera1_data)
 
-            print(self.hand)
+            # print(self.hand)
+
+            # print(self.arm_to_finger)
+            # print(self.list_avg(self.arm_to_finger))
+            temp = self.list_avg(self.arm_to_finger)
+            if(temp != 0 and temp < 0.12):
+                print("rock")
+            elif(temp > 0.15):
+                print("paper")
+            else:
+                print("unidentified")
+
 
             # if(self.camera2.results.multi_hand_landmarks != None):
             #     self.camera2_data = self.camera2.get_data()
